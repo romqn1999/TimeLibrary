@@ -7,8 +7,12 @@ main:
 	#jal GetMonthName
 
 	la $a0, time		# load address of time
-	addi $a1, $zero, 'C' 	# set type for convert
+	addi $a1, $zero, 'A' 	# set type for convert
 	jal Convert
+	
+	add  $a0, $zero, $v0
+	addi $v0, $zero, 4	# syscall print string
+	syscall		
 
 	addi $v0, $zero, 10	# 10 is the exit syscall
 	syscall			# do the syscall
@@ -177,10 +181,6 @@ Convert:
 		syscall
 
 	Convert_Clear:
-		lw   $a0, 0($sp)
-		addi $v0, $zero, 4	# syscall print string
-		syscall
-		
 		add  $v0, $zero, $a0	# return pointer of char array TIME
 		lw   $a0, 0($sp) 	# restore $a0
 		lw   $a1, 4($sp) 	# restore $a1
@@ -554,4 +554,3 @@ GetNum:		#GetNum(char *time, int from, int to) get number in a string from 'from
 	#----------------
 	endGetNum:
 	jr $ra
-
