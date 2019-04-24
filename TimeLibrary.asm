@@ -1,5 +1,8 @@
 	.data
 time:	.asciiz	"23/02/2019"		#declare storage for time; initial value
+	.space 256
+time_1:	.asciiz	"01/03/2001"		#declare storage for time; initial value
+time_2:	.asciiz	"29/02/2000"		#declare storage for time; initial value
 
 	.text
 main:
@@ -7,12 +10,20 @@ main:
 	#jal GetMonthName
 
 	la $a0, time		# load address of time
-	addi $a1, $zero, 'A' 	# set type for convert
+	addi $a1, $zero, 'C' 	# set type for convert
 	jal Convert
 	
 	add  $a0, $zero, $v0
 	addi $v0, $zero, 4	# syscall print string
-	syscall		
+	syscall
+
+	la $a0, time_1		# load address of time
+	la $a1, time_2		# load address of time
+	jal GetTime
+	
+	add  $a0, $zero, $v0
+	addi $v0, $zero, 1
+	syscall	
 
 	addi $v0, $zero, 10	# 10 is the exit syscall
 	syscall			# do the syscall
@@ -554,3 +565,162 @@ GetNum:		#GetNum(char *time, int from, int to) get number in a string from 'from
 	#----------------
 	endGetNum:
 	jr $ra
+	
+	
+# int GetTime(char* TIME_1, char* TIME_2)
+#	Get time gap in years between TIME_1 and TIME_2
+# Register used:
+#	$a0	- pointer to TIME_1
+#	$a1	- pointer to TIME_2
+#	$v0	- integer time gap in years between TIME_1 and TIME_2
+GetTime:
+				# set up the stack frame:
+	addi $sp, $sp, -40	# frame size = 40
+	sw   $t6, 36($sp)	# preserve $t6
+	sw   $t5, 32($sp)	# preserve $t5
+	sw   $t4, 28($sp)	# preserve $t4
+	sw   $t3, 24($sp)	# preserve $t3
+	sw   $t2, 20($sp)	# preserve $t2
+	sw   $t1, 16($sp)	# preserve $t1
+	sw   $t0, 12($sp)	# preserve $t0
+	sw   $ra, 8($sp)	# preserve the return address
+	sw   $a1, 4($sp)	# preserve $a1
+	sw   $a0, 0($sp)	# preserve $a0
+	
+	jal  Day		# get day of TIME_1
+	add  $t0, $zero, $v0	# $t0 = day_1
+	jal  Month		# get month of TIME_1
+	add  $t1, $zero, $v0	# $t1 = month_1
+	jal  Year		# get year of TIME_1
+	add  $t2, $zero, $v0	# $t2 = year_1
+	
+	add  $a0, $zero, $a1	# $a0 = $a1 is pointer to TIME_2
+	jal  Day		# get day of TIME_2
+	add  $t3, $zero, $v0	# $t3 = day_2
+	jal  Month		# get month of TIME_2
+	add  $t4, $zero, $v0	# $t4 = month_2
+	jal  Year		# get year of TIME_2
+	add  $t5, $zero, $v0	# $t5 = year_2
+	
+	slt  $t6, $t0, $t3	# $t6 = (day_1 < day_2) ? 1 : 0
+	beq  $t6, $zero, Greater_Day	# if (day_1 >= day_2) then goto Greater_Day
+					# if (day_1 < day_2)
+		addi $t1, $t1, -1	# month_1--
+		bne  $t1, $zero, Valid_Month	# if (month_1 != 0) then goto Valid_Month
+						# if (month_1 == 0)
+			addi $t1, $zero, 12	# month_1 = 12
+			addi $t2, $t2, -1	# year_1--
+		Valid_Month:
+					# calculate days in month for month_1
+		add  $a0, $zero, $t1	# $a0 = month_1
+		add  $a1, $zero, $t2	# $a1 = year_1
+		jal  DaysInMonth
+		add  $t0, $t0, $v0	# day_1 += DaysInMonth of month_1
+	Greater_Day:
+	
+	slt  $t6, $t1, $t4	# $t6 = (month_1 < month_2) ? 1 : 0
+	beq  $t6, $zero, Greater_Month	# if (month_1 >= month_2) then goto Greater_Month
+					# if (month_1 < month_2)
+		addi $t2, $t2, -1	# year_1--
+		addi $t1, $t1, 12	# month_1 += 12
+	Greater_Month:
+	
+	sub  $t0, $t0, $t3	# $t0 = day_1 - day_2 is diff_day
+	sub  $t1, $t1, $t4	# $t1 = month_1 - month_2 is diff_month
+	sub  $t2, $t2, $t5	# $t2 = year_1 - year_2 is diff_year
+	
+	slt  $t6, $t2, $zero	# $t6 = (diff_year < 0) ? 1 : 0
+	beq  $t6, $zero, Greater_Year	# if (diff_year > 0) then goto Greater_Year
+					# if (diff_year < 0)
+		addi $t6, $zero, -1	# $t6 = -1
+		mult $t2, $t6		# multiplication: set hi to high-order 32 bits, lo to low-order 32 bits of the product of $t2 and $t6
+		mflo $t2		# diff_year = diff_year * (-1)
+		add  $t6, $t0, $t1	# $t6 = day_1 + month_1
+		beq  $t6, $zero, Greater_Year	# if (day_1 + month_1 == 0) then goto Greater_Year
+						# if (day_1 + month_1 != 0)
+			addi $t2, $t2, -1	# diff_year--
+	Greater_Year:
+	
+	add  $v0, $zero, $t2	# return diff_year
+	
+	lw   $a0, 0($sp)	# restore $a0
+	lw   $a1, 4($sp)	# restore $a1
+	lw   $ra, 8($sp)	# restore the return address
+	lw   $t0, 12($sp)	# restore $t0
+	lw   $t1, 16($sp)	# restore $t1
+	lw   $t2, 20($sp)	# restore $t2
+	lw   $t3, 24($sp)	# restore $t3
+	lw   $t4, 28($sp)	# restore $t4
+	lw   $t5, 32($sp)	# restore $t5
+	lw   $t6, 36($sp)	# restore $t6
+	addi $sp, $sp, 40	# restore stack pointer
+	
+	jr $ra
+# end of GetTime function
+	
+	
+# int DaysInMonth(int month, int year)
+#	calculate number of days in a month
+# Register used:
+#	$a0	- the month
+#	$a1	- the year
+#	$v0	- integer number of days
+DaysInMonth:
+	.data
+daysInMonth:
+	.word 31	# month 1
+	.word 28	# month 2
+	.word 31	# month 3
+	.word 30	# month 4
+	.word 31	# month 5
+	.word 30	# month 6
+	.word 31	# month 7
+	.word 31	# month 8
+	.word 30	# month 9
+	.word 31	# month 10
+	.word 30	# month 11
+	.word 31	# month 12
+	.text
+				# set up the stack frame:
+	addi $sp, $sp, -16	# frame size = 40
+	sw   $t0, 12($sp)	# preserve $t0
+	sw   $ra, 8($sp)	# preserve the return address
+	sw   $a1, 4($sp)	# preserve $a1
+	sw   $a0, 0($sp)	# preserve $a0
+	
+	la   $v0, daysInMonth	# load base address of daysInMonth array
+	sll  $t0, $a0, 2	# $t0 = $a0 * (2^2)
+	add  $v0, $v0, $t0	# $v0 = (daysInMonth + month)
+	lw   $v0, -4($v0)	# $v0 = daysInMonth[month - 1] just because array start from 0
+	
+	addi $t0, $zero, 2	# $t0 = 2
+	bne  $a0, $t0, DaysInMonth_CleanUp	# if (month != 2) then goto DaysInMonth_CleanUp
+					# if (month == 2)
+					# check leap year. isLeapYear = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+					# check for (year % 4 == 0 && year % 100 != 0)
+		addi $t0, $zero, 4	# $t0 = 4
+		div  $a1, $t0		# divide year by 4 then set LO to quotient and HI to remainder
+		mfhi $t0		# $t0 = year % 4
+		bne  $t0, $zero, CmpMonthMod400	# if (year % 4 != 0) then goto CmpMonthMod400
+		addi $t0, $zero, 100	# $t0 = 100
+		div  $a1, $t0		# divide year by 100 then set LO to quotient and HI to remainder
+		mfhi $t0		# $t0 = year % 100
+		beq  $t0, $zero, CmpMonthMod400	# if (year % 100 == 0) then goto CmpMonthMod400
+			j    IsLeapYear		# if (year % 4 == 0 && year % 100 != 0) then goto IsLeapYear
+		CmpMonthMod400:		# check for (year % 400 == 0)
+		addi $t0, $zero, 400	# $t0 = 400
+		div  $a1, $t0		# divide year by 400 then set LO to quotient and HI to remainder
+		mfhi $t0		# $t0 = year % 400
+		bne  $t0, $zero, DaysInMonth_CleanUp	# if (year % 400 != 0) then goto DaysInMonth_CleanUp
+			IsLeapYear:		# this is leap year
+			addi $v0, $v0, 1	# days in month 2 = 29
+	
+	DaysInMonth_CleanUp:
+	lw   $a0, 0($sp)	# restore $a0
+	lw   $a1, 4($sp)	# restore $a1
+	lw   $ra, 8($sp)	# restore the return address
+	lw   $t0, 12($sp)	# restore $t0
+	addi $sp, $sp, 16	# restore stack pointer
+	
+	jr $ra
+# end of DaysInMonth function
