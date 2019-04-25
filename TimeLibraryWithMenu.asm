@@ -266,9 +266,105 @@ Option6:
 	endOption6:
 	jr $ra
 	
-IsValid:	#bool IsValid(char *TIME)
-	addi $v0, $zero, 1
-	jr $ra
+# int IsValid(char* TIME)
+#	check TIME is valid date
+# Register used:
+#	$a0	- a pointer to null-terminated char array TIME
+#	4v0	- integer 1 if valid else 0
+IsValid:
+				# set up the stack frame
+	addi $sp, $sp, -28 	# frame size = 28
+	sw   $t4, 24($sp)	# preserve $t4
+	sw   $t3, 20($sp)	# preserve $t3
+	sw   $t2, 16($sp)	# preserve $t2
+	sw   $t1, 12($sp)	# preserve $t1
+	sw   $t0, 8($sp)	# preserve $t0
+	sw   $ra, 4($sp) 	# preserve the Return Address
+	sw   $a0, 0($sp) 	# preserve $a0 - char* TIME
+	
+				# check format DD/MM/YYYY of TIME
+	addi $t0, $zero, 0	# i = 0
+	CheckFormat_Loop:
+		add  $t1, $a0, $t0	# $t1 = (TIME + i)
+		lb   $t1, 0($t1)	# $t1 = TIME[i]
+		beq  $t1, $zero, CheckFormat_EndLoop	# goto CheckFormat_EndLoop if TIME[i] = '\0'
+					# if ((i == 2 || i == 5) && TIME[i] != '/') then return 0
+		addi $t2, $zero, 2	# $t2 = 2
+		beq  $t0, $t2, Check_Delimiter_Char	# if (i == 2) goto Check_Delimiter_Char
+		addi $t2, $zero, 5	# $t2 = 5
+		beq  $t0, $t2, Check_Delimiter_Char	# else if (i == 5) goto Check_Delimiter_Char
+		j    Check_Digit			# else goto Check_Digit
+		Check_Delimiter_Char:
+			addi $t2, $zero, '/'	# $t2 = '/'
+			beq  $t1, $t2, CheckFormat_ContinueLoop	# if (TIME[i] = '/') then goto CheckFormat_ContinueLoop
+								# else return 0
+				j    IsValid_ReturnFalse
+		Check_Digit:
+			addi $t2, $zero, '0'	# $t2 = '0'
+			slt  $t2, $t1, $t2	# $t2 = (TIME[i] < '0') ? 1 : 0
+			bne  $t2, $zero, IsValid_ReturnFalse	# if (TIME[i] < '0') then goto IsValid_ReturnFalse
+			addi $t2, $zero, '9'	# $t2 = '9'
+			slt  $t2, $t2, $t1	# $t2 = ('9' < TIME[i]) ? 1 : 0
+			bne  $t2, $zero, IsValid_ReturnFalse	# if ('9' < TIME[i]) then goto IsValid_ReturnFalse
+		CheckFormat_ContinueLoop:
+		addi $t0, $t0, 1	# i++
+		j    CheckFormat_Loop
+	CheckFormat_EndLoop:
+	
+				# check length of TIME is valid format
+	addi $t2, $zero, 10	# $t2 = 10
+	bne  $t0, $t2, IsValid_ReturnFalse	# if (i != 10) then goto IsValid_ReturnFalse
+	
+	jal  Day		# get day of TIME
+	add  $t0, $zero, $v0	# $t0 = day
+	
+	jal  Month		# get month of TIME
+	add  $t1, $zero, $v0	# $t1 = month
+	
+	jal  Year		# get year of TIME
+	add  $t2, $zero, $v0	# $t1 = year
+	
+				# check 1 <= month <= 12
+	addi $t3, $zero, 1	# $t3 = 1
+	slt  $t3, $t1, $t3	# $t3 = (month < 1) ? 1 : 0
+	bne  $t3, $zero, IsValid_ReturnFalse	# if (month < 1) then goto IsValid_ReturnFalse
+	addi $t3, $zero, 12	# $t3 = 12
+	slt  $t3, $t3, $t1	# $t3 = (12 < month) ? 1 : 0
+	bne  $t3, $zero, IsValid_ReturnFalse	# if (12 < month) then goto IsValid_ReturnFalse
+	
+				# check 1 <= day <= DaysInMonth(month, year)
+	addi $t3, $zero, 1	# $t3 = 1
+	slt  $t3, $t0, $t3	# $t3 = (day < 1) ? 1 : 0
+	bne  $t3, $zero, IsValid_ReturnFalse	# if (day < 1) then goto IsValid_ReturnFalse
+				# get dáy in month
+	add  $a0, $zero, $t1	# $a0 = month
+	add  $a1, $zero, $t2	# $a1 = year
+	jal  DaysInMonth	# call DaysInMonth function
+	add  $t3, $zero, $v0	# $t3 = DaysInMonth(month, year)
+	slt  $t3, $t3, $t0	# $t3 = (DaysInMonth(month, year) < day) ? 1 : 0
+	bne  $t3, $zero, IsValid_ReturnFalse	# if (DaysInMonth(month, year) < day) then goto IsValid_ReturnFalse
+	
+	IsValid_ReturnTrue:
+		addi $v0, $zero, 1	# $v0 = 1
+		j    IsValid_Cleanup	# return
+	
+	IsValid_ReturnFalse:
+		addi $v0, $zero, 0	# $v0 = 0
+		j    IsValid_Cleanup	# return
+	
+	IsValid_Cleanup:
+	
+	lw   $a0, 0($sp) 	# restore $a0
+	lw   $ra, 4($sp) 	# restore the Return Address
+	lw   $t0, 8($sp)	# restore $t0
+	lw   $t1, 12($sp)	# restore $t1
+	lw   $t2, 16($sp)	# restore $t2
+	lw   $t3, 20($sp)	# restore $t3
+	lw   $t4, 24($sp)	# restore $t4
+	addi $sp, $sp, 28 	# restore the Stack Pointer
+	
+	jr   $ra		# return
+# end of IsValid function
 	
 Pause:		#void pause() //Stop the program temporarily
 	#Save registers values
