@@ -1255,6 +1255,18 @@ daysInMonth:
 # end of DaysInMonth function
 
 Itoa: # int Itoa(int a0, char* a1) tra ve do dai cua a1
+        # Luu thanh ghi
+	addi $sp, $sp, -4
+	  sw $ra, 0($sp)
+	addi $sp, $sp, -4
+	  sw $t0, 0($sp)
+	addi $sp, $sp, -4
+	  sw $t1, 0($sp)
+	addi $sp, $sp, -4
+	  sw $t2, 0($sp)
+	addi $sp, $sp, -4
+	  sw $t3, 0($sp)
+
 	addi $sp, $sp, -1
 	  sb $zero, 0($sp) # Them ki tu NULL vao Stack
 	la $t2, ($a1) # %t2 chua dia chi cua char* a1
@@ -1286,6 +1298,16 @@ Itoa: # int Itoa(int a0, char* a1) tra ve do dai cua a1
 		j Itoa_Load_String
 
 	Itoa_Exit:
+		lw $t3, 0($sp)
+		  addi $sp, $sp, 4
+		lw $t2, 0($sp)
+		  addi $sp, $sp, 4
+		lw $t1, 0($sp)
+		  addi $sp, $sp, 4
+		lw $t0, 0($sp)
+		  addi $sp, $sp, 4
+		lw $ra, 0($sp)
+		  addi $sp, $sp, 4	
 		jr $ra # Quay tro ve ham goi ban dau
 #End of Itoa function
 
