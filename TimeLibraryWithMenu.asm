@@ -1291,13 +1291,17 @@ Itoa: # int Itoa(int a0, char* a1) tra ve do dai cua a1
 
 Date: # Date(int a0, int a1, int a2, char* a3)
 	addi $sp, $sp, -4
-	  sw $v0, 0($sp) # Luu gia tri cua v0 vao Stack
-	addi $sp, $sp, -4
 	  sw $ra, 0($sp) # Luu dia chi tra ve tren thanh ghi $ra
 	addi $sp, $sp, -4
 	  sw $a1, 0($sp) # Luu gia tri cua a1 vao Stack
 	addi $sp, $sp, -4
 	  sw $a0, 0($sp) # Luu gia tri cua a0 vao Stack
+	addi $sp, $sp, -4
+	  sw $t0, 0($sp) # Luu gia tri cua t0 vao Stack
+	addi $sp, $sp, -4
+	  sw $t1, 0($sp) # Luu gia tri cua t1 vao Stack
+	addi $sp, $sp, -4
+	  sw $t2, 0($sp) # Luu gia tri cua t2 vao Stack
   
 	la $a1, ($a3) # Luu dia chi cua a3 vao a1
 	jal Itoa # Date(a0, Arr)
@@ -1338,6 +1342,12 @@ Date: # Date(int a0, int a1, int a2, char* a3)
 		jal Itoa
  
 	Date_Exit:
+		lw $t2, 0($sp) # Lay ra t2
+		  addi $sp, $sp, 4
+		lw $t1, 0($sp) # Lay ra t1
+		  addi $sp, $sp, 4
+		lw $t0, 0($sp) # Lay ra t0
+		  addi $sp, $sp, 4
 		lw $a0, 0($sp) # Lay ra a0
 		  addi $sp, $sp, 4
 		lw $a1, 0($sp) # Lay ra a1
@@ -1351,6 +1361,12 @@ Date: # Date(int a0, int a1, int a2, char* a3)
 LeapYear: # bool LeapYear(Time a0)
 	addi $sp, $sp, -4
 	  sw $ra, 0($sp) # Luu $ra vao Stack
+	addi $sp, $sp, -4
+	  sw $t0, 0($sp) # Luu $t0 vao Stack
+	addi $sp, $sp, -4
+	  sw $t1, 0($sp) # Luu $t1 vao Stack
+	addi $sp, $sp, -4
+	  sw $t2, 0($sp) # Luu $t2 vao Stack
 
 	jal Year
 
@@ -1375,6 +1391,12 @@ LeapYear: # bool LeapYear(Time a0)
 		beq $t1, $t2, LeapYear_IF # If t1 = t1 + t2 then v0 = 1 
 
 	LeapYear_Exit:
+		lw $t2, 0($sp) # Lay gia tri cua $t2 trong Stadk
+		  addi $sp, $sp, 4
+		lw $t1, 0($sp) # Lay gia tri cua $t1 trong Stadk
+		  addi $sp, $sp, 4
+		lw $t0, 0($sp) # Lay gia tri cua $t0 trong Stadk
+		  addi $sp, $sp, 4
 		lw $ra, 0($sp) # Lay gia tri cua $ra trong Stadk
 		  addi $sp, $sp, 4
 		jr $ra
@@ -1383,76 +1405,108 @@ LeapYear: # bool LeapYear(Time a0)
 WeekDay: # WeekDay(char* a0)
 	addi $sp, $sp, -4
 	  sw $ra, 0($sp) # Luu $ra vao Stack
+	addi $sp, $sp, -4
+	  sw $t0, 0($sp) # Luu $t0 vao Stack
+	addi $sp, $sp, -4
+	  sw $t1, 0($sp) # Luu $t1 vao Stack
+	addi $sp, $sp, -4
+	  sw $t2, 0($sp) # Luu $t2 vao Stack
+	addi $sp, $sp, -4
+	  sw $t3, 0($sp) # Luu $t3 vao Stack
+	addi $sp, $sp, -4
+	  sw $t4, 0($sp) # Luu $t4 vao Stack
 
 	jal Day
-	add $t0, $v0, $zero # t0 la ngay
+	add $t0, $v0, $zero          # t0 la ngay
 	jal Month
-	add $t1, $v0, $zero # t1 la thang
+	add $t1, $v0, $zero 	     # t1 la thang
 	jal Year
-	add $t2, $v0, $zero # t2 la nam
-  #li $t0, 26
-  #li $t1, 4
-  #li $t2, 2019
+	add $t2, $v0, $zero 	     # t2 la nam
+	div $t3, $t2, 100            # t3 = t2 / 100 : la the ky
+	mfhi $t2                     
 
-		div $t3, $t2, 100 # t3 la the ky
-		mfhi $t4 # t4 = t2 % 100
-		bnez $t4, WeekDay_IF # If t4 !=0 then t3++
-		beqz $zero, WeekDay_IF_Exit  
+	addi $t4, $zero, 3           # t4 = 3
+	slt $t4, $t1, $t4	     
+	bnez $t4, WeekDay_IF         # If t1 < 3 then t1 += 12
+	beqz $zero, WeekDay_IF_Exit  
 
 	WeekDay_IF:
-		addi $t3, $t3, 1 # t3++
+		addi $t1, $t1, 12 # t1 += 12
 
 	WeekDay_IF_Exit: 
 		# t0 = (ngày + tháng + n?m + n?m/4 + th? k?) mod 7
-		add $t0, $t0, $t1
-		add $t0, $t0, $t2
-		div $t2, $t2, 4 # t2 = t2 / 4
-		add $t0, $t0, $t2
-		add $t0, $t0, $t3
+		addi $t1, $t1, 1              # t1 = 13/5*(t1+1)
+		addi $v0, $zero, 13
+		mult $t1, $v0
+		mflo $t1
+		div $t1, $t1, 5
+		add $t0, $t0, $t1             # t0 = t0 + t1
+
+		add $t0, $t0, $t2             # t0 = t0 + t2
+		div $t2, $t2, 4               # t2 = t2 / 4
+		add $t0, $t0, $t2             # t0 = t0 + t2/4
+		
+		addi $v0, $zero, 2
+		mult $t3, $v0                 # t2 = 2*t3
+		mflo $t2
+		sub $t0, $t0, $t2	      # t0 = t0 - t2
+		div $t3, $t3, 4               # t3 = t3 / 4
+		add $t0, $t0, $t3             # t0 = t0 + t3
+
 		div $t0, $t0, 7
 		mfhi $t0
   
 		# Switch(t0) case:...
 		bnez $t0, WeekDay_Case_1
-		la $v0, string1 # k = 0 -> luu v0 = Sun
+		la $v0, string7               # k = 0 -> luu v0 = Sat
 		j WeekDay_Exit
 
 	WeekDay_Case_1:
 		addi $t0, $t0, -1
 		bnez $t0, WeekDay_Case_2
-		la $v0, string2 # k = 0 -> luu v0 = Mon
+		la $v0, string1               # k = 1 -> luu v0 = Sun
 		j WeekDay_Exit
 
 	WeekDay_Case_2:
 		addi $t0, $t0, -1
 		bnez $t0, WeekDay_Case_3
-		la $v0, string3 # k = 0 -> luu v0 = Tue
+		la $v0, string2               # k = 2 -> luu v0 = Mon
 		j WeekDay_Exit
 
 	WeekDay_Case_3:
 		addi $t0, $t0, -1
 		bnez $t0, WeekDay_Case_4
-		la $v0, string4 # k = 0 -> luu v0 = Wed
+		la $v0, string3               # k = 3 -> luu v0 = Tue
 		j WeekDay_Exit
 
 	WeekDay_Case_4:
 		addi $t0, $t0, -1
 		bnez $t0, WeekDay_Case_5
-		la $v0, string5 # k = 0 -> luu v0 = Thurs
+		la $v0, string4               # k = 4 -> luu v0 = Wed
 		j WeekDay_Exit
 
 	WeekDay_Case_5:
 		addi $t0, $t0, -1
 		bnez $t0, WeekDay_Case_6
-		la $v0, string6 # k = 0 -> luu v0 = Fri
+		la $v0, string5               # k = 5 -> luu v0 = Thurs
 		j WeekDay_Exit
 
 	WeekDay_Case_6:
 		addi $t0, $t0, -1
 		bnez $t0, WeekDay_Exit
-		la $v0, string7 # k = 0 -> luu v0 = Sat
+		la $v0, string6               # k = 6 -> luu v0 = Fri
  
 	WeekDay_Exit:
+		lw $t4, 0($sp) # Lay gia tri cua $ra luc ban dau
+ 		  addi $sp, $sp, 4
+		lw $t3, 0($sp) # Lay gia tri cua $ra luc ban dau
+ 		  addi $sp, $sp, 4
+		lw $t2, 0($sp) # Lay gia tri cua $ra luc ban dau
+ 		  addi $sp, $sp, 4
+		lw $t1, 0($sp) # Lay gia tri cua $ra luc ban dau
+ 		  addi $sp, $sp, 4
+		lw $t0, 0($sp) # Lay gia tri cua $ra luc ban dau
+ 		  addi $sp, $sp, 4
 		lw $ra, 0($sp) # Lay gia tri cua $ra luc ban dau
  		  addi $sp, $sp, 4
 		jr $ra
@@ -1463,6 +1517,10 @@ LeapYear_Nearest: # int* LeaYearNearest(char* time)
 	  sw $ra, 0($sp) # Luu $ra vao Stack
 	addi $sp, $sp, -4
 	  sw $a0, 0($sp) # Luu $a0 vao Stack
+	addi $sp, $sp, -4
+	  sw $t0, 0($sp) # Luu $t0 vao Stack
+	addi $sp, $sp, -4
+	  sw $t1, 0($sp) # Luu $t1 vao Stack
 	
 	jal Year
 	
@@ -1488,6 +1546,10 @@ LeapYear_Nearest: # int* LeaYearNearest(char* time)
  		add $v1, $t1, $zero # v1 chua nam lon hon
 
 	LeapYear_Nearest_Exit:
+		lw $t1, 0($sp)
+		  addi $sp, $sp, 4 # Tra ve gia tri ban dau cua $t1
+		lw $t0, 0($sp)
+		  addi $sp, $sp, 4 # Tra ve gia tri ban dau cua $t0
 		lw $a0, 0($sp)
 		  addi $sp, $sp, 4 # Tra ve gia tri ban dau cua $a0
 		lw $ra, 0($sp)
