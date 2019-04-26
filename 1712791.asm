@@ -183,7 +183,7 @@ WeekDay: # WeekDay(char* a0)
 		addi $t3, $t3, 1 # t3++
 
 	WeekDay_IF_Exit: 
-		# t0 = (ng‡y + th·ng + n?m + n?m/4 + th? k?) mod 7
+		# t0 = (ng√†y + th√°ng + n?m + n?m/4 + th? k?) mod 7
 		add $t0, $t0, $t1
 		add $t0, $t0, $t2
 		div $t2, $t2, 4 # t2 = t2 / 4
