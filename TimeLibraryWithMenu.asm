@@ -14,6 +14,9 @@ wrongInput:	.asciiz	"---Du lieu nhap khong hop le, nhap lai---"
 time1Input:	.asciiz	"\tNhap ngay, thang, nam cho TIME_1:\n"
 time2Input:	.asciiz	"\tNhap ngay, thang, nam cho TIME_2:\n"
 
+isLeapYear:	.asciiz	" la nam nhuan"
+isNotLeapYear:	.asciiz	" khong phai nam nhuan"
+
 instruction:
 	.ascii "----------Ban hay chon 1 trong cac thao tac duoi day----------\n"
 	.ascii "1. Xuat chuoi TIME theo dinh dang DD/MM/YYYY\n"
@@ -56,22 +59,30 @@ Comma_Str:
 	.asciiz ", "
 Tmp_Array:
 	.space 256		# reserve space for a 256 elements array
+	
+string1: .asciiz "Sun"
+string2: .asciiz "Mon"
+string3: .asciiz "Tue"
+string4: .asciiz "Wed"
+string5: .asciiz "Thurs"
+string6: .asciiz "Fri"
+string7: .asciiz "Sat"
 
 	.text
 main:	
 	#Input day, month, year loop
 	inputLoop:
-	la $a0, time
-	jal Input	#Input date from key board
-	jal IsValid	#Check if date is valid
-	bne $v0, $zero, endInputLoop	#If date is valid, end iput process
-	#Notify wrong input
-	addi $v0, $zero, 4	#syscall print string
-	la   $a0, wrongInput	#load addess string wrong input
-	syscall
-	jal Endline
-	#------------------
-	j inputLoop
+		la $a0, time
+		jal Input	#Input date from key board
+		jal IsValid	#Check if date is valid
+		bne $v0, $zero, endInputLoop	#If date is valid, end iput process
+		#Notify wrong input
+		addi $v0, $zero, 4	#syscall print string
+		la   $a0, wrongInput	#load addess string wrong input
+		syscall
+		jal Endline
+		#------------------
+		j inputLoop
 	endInputLoop:
 	
 	#Save original time string
@@ -82,53 +93,53 @@ main:
 	
 	#Menu loop
 	menuLoop:
-	#Get original time string
-	la $a0, time
-	la $a1, timeBackup
-	jal strcpy	
-	#------------------------
-	jal Menu	
-	addi $v0, $v0, -1	#start number = 0 instead of 1
-	#Switch ($v0)
-	bne $v0, $zero, C1	#case 1
-	jal Option1
-	j exitMenuCases
-	C1:			#case 2
-	addi $v0, $v0, -1
-	bne $v0, $zero, C2
-	jal Option2
-	j exitMenuCases
-	C2:			#case 3
-	addi $v0, $v0, -1
-	bne $v0, $zero, C3
-	jal Option3
-	j exitMenuCases
-	C3:			#case 4
-	addi $v0, $v0, -1
-	bne $v0, $zero, C4
-	jal Option4	
-	j exitMenuCases
-	C4:			#case 5
-	addi $v0, $v0, -1
-	bne $v0, $zero, C5
-	jal Option5	
-	j exitMenuCases
-	C5:			#case 6
-	addi $v0, $v0, -1
-	bne $v0, $zero, C6
-	jal Option6	
-	j exitMenuCases
-	C6:			#default
-	j endMain
-	#-----------------
-	exitMenuCases:
-	jal Pause
-	j menuLoop
+		#Get original time string
+		la $a0, time
+		la $a1, timeBackup
+		jal strcpy	
+		#------------------------
+		jal Menu	
+		addi $v0, $v0, -1	#start number = 0 instead of 1
+		#Switch ($v0)
+			bne $v0, $zero, C1	#case 1
+			jal Option1
+			j exitMenuCases
+		C1:			#case 2
+			addi $v0, $v0, -1
+			bne $v0, $zero, C2
+			jal Option2
+			j exitMenuCases
+		C2:			#case 3
+			addi $v0, $v0, -1
+			bne $v0, $zero, C3
+			jal Option3
+			j exitMenuCases
+		C3:			#case 4
+			addi $v0, $v0, -1
+			bne $v0, $zero, C4
+			jal Option4	
+			j exitMenuCases
+		C4:			#case 5
+			addi $v0, $v0, -1
+			bne $v0, $zero, C5
+			jal Option5	
+			j exitMenuCases
+		C5:			#case 6
+			addi $v0, $v0, -1
+			bne $v0, $zero, C6
+			jal Option6	
+			j exitMenuCases
+		C6:			#default
+			j endMain
+		#-----------------
+		exitMenuCases:
+			jal Pause
+			j menuLoop
 	#end menu loop
 	
 	endMain:
-	addi $v0, $zero, 10	# 10 is the exit syscall
-	syscall			# do the syscall
+		addi $v0, $zero, 10	# 10 is the exit syscall
+		syscall			# do the syscall
 	#end main
 	
 Option1:
@@ -145,14 +156,14 @@ Option1:
 	la   $a0, time
 	syscall
 	jal Endline
-	#Restore registers values
-	lw $v0, 0($sp)
-	lw $a0, 4($sp)
-	lw $ra, 8($sp)
-	addi $sp, $sp, 12
-	#----------------
 	endOption1:
-	jr $ra
+		#Restore registers values
+		lw $v0, 0($sp)
+		lw $a0, 4($sp)
+		lw $ra, 8($sp)
+		addi $sp, $sp, 12
+		#----------------
+		jr $ra
 	
 Option2:
 	#Save registers values
@@ -175,41 +186,88 @@ Option2:
 	
 	add  $a0, $zero, $a1	# time string converted
 	syscall
-	#Restore registers values
-	lw $ra, 0($sp)
-	lw $a0, 4($sp)
-	lw $a1, 8($sp)
-	lw $v0, 12($sp)
-	addi $sp, $sp, 16
-	#----------------
 	endOption2:
-	jr $ra
+		#Restore registers values
+		lw $ra, 0($sp)
+		lw $a0, 4($sp)
+		lw $a1, 8($sp)
+		lw $v0, 12($sp)
+		addi $sp, $sp, 16
+		#----------------
+		jr $ra
 	
 Option3:
 	#Save registers values
-	addi $sp, $sp, -4
+	addi $sp, $sp, -16
+	sw $v0, 12($sp)
+	sw $t0, 8($sp)
+	sw $a0, 4($sp)
 	sw $ra, 0($sp)
 	#----------------
+	la $a0, time
+	jal WeekDay
 	
-	#Restore registers values
-	lw $ra, 0($sp)
-	addi $sp, $sp, 4
-	#----------------
+	add $t0, $zero, $v0	# keep week day's address
+	addi $v0, $zero, 4	# syscall print string
+	la   $a0, result
+	syscall
+	
+	add  $a0, $zero, $t0	# $a0 = week day's address
+	syscall
 	endOption3:
-	jr $ra
+		#Restore registers values
+		lw $ra, 0($sp)
+		lw $a0, 4($sp)
+		lw $t0, 8($sp)
+		lw $v0, 12($sp)
+		addi $sp, $sp, 16
+		#----------------
+		jr $ra
 	
 Option4:
 	#Save registers values
-	addi $sp, $sp, -4
+	addi $sp, $sp, -20
+	sw $v0, 0($sp)
+	sw $t1, 0($sp)
+	sw $t0, 0($sp)
+	sw $a0, 0($sp)
 	sw $ra, 0($sp)
 	#----------------
+	la $a0, time
+	jal LeapYear
 	
-	#Restore registers values
-	lw $ra, 0($sp)
-	addi $sp, $sp, 4
-	#----------------
+	add $t0, $zero, $v0	# keep isLeapYear value
+	addi $v0, $zero, 4	# syscall print string
+	la   $a0, result
+	syscall
+	
+	la $a0, time
+	jal Year
+	add $t1, $zero, $v0	# $t1 = year
+	
+	addi $v0, $zero, 1	# syscall print integer
+	add  $a0, $zero, $t1	# $a0 = isLeapYear value
+	syscall
+	
+	beq $t0, $zero, NotLeapYear
+	addi $v0, $zero, 4	# syscall print string
+	la   $a0, isLeapYear
+	syscall
+	j endOption4
+	NotLeapYear:
+		addi $v0, $zero, 4	# syscall print string
+		la   $a0, isNotLeapYear
+		syscall
 	endOption4:
-	jr $ra
+		#Restore registers values
+		lw $ra, 0($sp)
+		lw $a0, 4($sp)
+		lw $t0, 8($sp)
+		lw $t1, 12($sp)
+		lw $v0, 16($sp)
+		addi $sp, $sp, 20
+		#----------------
+		jr $ra
 
 Option5:
 	#Save registers values
@@ -243,15 +301,15 @@ Option5:
 	add  $a0, $zero, $a1
 	addi $v0, $zero, 1
 	syscall
-	#Restore registers values
-	lw $ra, 0($sp)
-	lw $v0, 4($sp)
-	lw $a0, 8($sp)
-	lw $v1, 12($sp)
-	addi $sp, $sp, 16
-	#----------------
 	endOption5:
-	jr $ra
+		#Restore registers values
+		lw $ra, 0($sp)
+		lw $v0, 4($sp)
+		lw $a0, 8($sp)
+		lw $v1, 12($sp)
+		addi $sp, $sp, 16
+		#----------------
+		jr $ra
 	
 Option6:
 	#Save registers values
@@ -259,12 +317,12 @@ Option6:
 	sw $ra, 0($sp)
 	#----------------
 	
-	#Restore registers values
-	lw $ra, 0($sp)
-	addi $sp, $sp, 4
-	#----------------
 	endOption6:
-	jr $ra
+		#Restore registers values
+		lw $ra, 0($sp)
+		addi $sp, $sp, 4
+		#----------------
+		jr $ra
 	
 # int IsValid(char* TIME)
 #	check TIME is valid date
@@ -377,14 +435,14 @@ Pause:		#void pause() //Stop the program temporarily
 	addi $a1, $zero, 2
 	addi $v0, $zero, 8
 	syscall
-        #Restore registers values
-	lw $a1, 0($sp)
-	lw $a0, 4($sp)
-	lw $v0, 8($sp)
-	addi $sp, $sp, 12
-	#----------------
 	endPause:
-	jr $ra
+	        #Restore registers values
+		lw $a1, 0($sp)
+		lw $a0, 4($sp)
+		lw $v0, 8($sp)
+		addi $sp, $sp, 12
+		#----------------
+		jr $ra
 
 	
 Input:	#void Input(char *TIME)
@@ -431,16 +489,16 @@ Input:	#void Input(char *TIME)
         addi $a1, $zero, '/'
         sb $a1, 2($a0)
         sb $a1, 5($a0)
-        #Restore registers values
-	lw $a1, 0($sp)
-	lw $a0, 4($sp)
-	lw $v0, 8($sp)
-	lw $ra, 12($sp)
-	lw $t0, 16($sp)
-	addi $sp, $sp, 20
-	#----------------
 	endInput:
-	jr $ra
+	        #Restore registers values
+		lw $a1, 0($sp)
+		lw $a0, 4($sp)
+		lw $v0, 8($sp)
+		lw $ra, 12($sp)
+		lw $t0, 16($sp)
+		addi $sp, $sp, 20
+		#----------------
+		jr $ra
 	
 
 Menu:	#int Menu() return number chosen
@@ -454,12 +512,12 @@ Menu:	#int Menu() return number chosen
 	
 	addi $v0, $zero, 5	#syscal read integer
 	syscall
-	#Restore registers values
-	lw $a0, 0($sp)
-	addi $sp, $sp, 4
-	#----------------
 	endMenu:
-	jr $ra
+		#Restore registers values
+		lw $a0, 0($sp)
+		addi $sp, $sp, 4
+		#----------------
+		jr $ra
 	
 Option2Menu:	#int Option2Menu() return type chosen
 	#Save registers values
@@ -474,13 +532,13 @@ Option2Menu:	#int Option2Menu() return type chosen
 	addi $v0, $zero, 12	#syscal read character
 	syscall
 	jal Endline
-	#Restore registers values
-	lw $a0, 0($sp)
-	lw $ra, 4($sp)
-	addi $sp, $sp, 8
-	#----------------
 	endOption2Menu:
-	jr $ra
+		#Restore registers values
+		lw $a0, 0($sp)
+		lw $ra, 4($sp)
+		addi $sp, $sp, 8
+		#----------------
+		jr $ra
 
 	
 Endline:
@@ -492,13 +550,13 @@ Endline:
 	addi $a0, $0, 0xA
         addi $v0, $0, 0xB
         syscall
-        #Restore registers values
-	lw $v0, 0($sp)
-	lw $a0, 4($sp)
-	addi $sp, $sp, 8
-	#----------------
 	endEndline:
-	jr $ra
+		#Restore registers values
+		lw $v0, 0($sp)
+		lw $a0, 4($sp)
+		addi $sp, $sp, 8
+		#----------------
+		jr $ra
 	
 Day:
 	#Save registers values
@@ -510,14 +568,14 @@ Day:
 	addi $a1, $zero, 0
 	addi $a2, $zero, 2
 	jal GetNum
-	#Restore registers values
-	lw $ra, 0($sp)
-	lw $a2, 4($sp)
-	lw $a1, 8($sp)
-	addi $sp, $sp, 12
-	#----------------
 	endDay:
-	jr $ra
+		#Restore registers values
+		lw $ra, 0($sp)
+		lw $a2, 4($sp)
+		lw $a1, 8($sp)
+		addi $sp, $sp, 12
+		#----------------
+		jr $ra
 
 Month:
 	#Save registers values
@@ -529,14 +587,14 @@ Month:
 	addi $a1, $zero, 3
 	addi $a2, $zero, 5
 	jal GetNum
-	#Restore registers values
-	lw $ra, 0($sp)
-	lw $a2, 4($sp)
-	lw $a1, 8($sp)
-	addi $sp, $sp, 12
-	#----------------
 	endMonth:
-	jr $ra
+		#Restore registers values
+		lw $ra, 0($sp)
+		lw $a2, 4($sp)
+		lw $a1, 8($sp)
+		addi $sp, $sp, 12
+		#----------------
+		jr $ra
 
 Year:
 	#Save registers values
@@ -548,14 +606,14 @@ Year:
 	addi $a1, $zero, 6
 	addi $a2, $zero, 10
 	jal GetNum
-	#Restore registers values
-	lw $ra, 0($sp)
-	lw $a2, 4($sp)
-	lw $a1, 8($sp)
-	addi $sp, $sp, 12
-	#----------------
 	endYear:
-	jr $ra
+		#Restore registers values
+		lw $ra, 0($sp)
+		lw $a2, 4($sp)
+		lw $a1, 8($sp)
+		addi $sp, $sp, 12
+		#----------------
+		jr $ra
 
 
 GetNum:		#GetNum(char *TIME, int from, int to) get number in a string from 'from' to 'to' - 1
@@ -566,6 +624,7 @@ GetNum:		#GetNum(char *TIME, int from, int to) get number in a string from 'from
 	sw $t1, 0($sp)
 	#----------------
 	addi $v0, $zero, 0
+	
 	loopGetNum:
 		slt $t0, $a1, $a2	#t0 = (a1 < a2) ? 1 : 0
 		beq  $t0, $zero, endLoopGetNum	#if (t0 == 0) endLoop
@@ -581,14 +640,15 @@ GetNum:		#GetNum(char *TIME, int from, int to) get number in a string from 'from
 		addi $a1, $a1, 1
 		j loopGetNum
 	endLoopGetNum:
-	#Restore registers values
-	lw $t1, 0($sp)
-	lw $t0, 4($sp)
-	lw $a1, 8($sp)
-	addi $sp, $sp, 12
-	#----------------
+	
 	endGetNum:
-	jr $ra
+	#Restore registers values
+		lw $t1, 0($sp)
+		lw $t0, 4($sp)
+		lw $a1, 8($sp)
+		addi $sp, $sp, 12
+		#----------------
+		jr $ra
 	
 # char* Convert(char* TIME, char type)
 #	convert format of char array TIME from "DD/MM/YYYY" to 'type'
@@ -1166,3 +1226,207 @@ daysInMonth:
 	
 	jr $ra
 # end of DaysInMonth function
+
+Itoa: # int Itoa(int a0, char* a1) tra ve do dai cua a1
+	addi $sp, $sp, -1
+	  sb $zero, 0($sp) # Them ki tu NULL vao Stack
+	la $t2, ($a1) # %t2 chua dia chi cua char* a1
+	add $t0, $zero, $a0 # $t0 = a0
+	add $v0, $zero, $zero # vo = 0
+
+	Itoa_Execute:
+		div $t1, $t0, 10 # t1 = t0 / 10
+		mfhi $t1 # du -> t1 = t0 % 10
+		mflo $t0 # thuong -> t1 = t0 / 10
+		addi $t1, $t1, 48 # Chuyen so sang ma ASCII tuong ung
+
+		addi $sp, $sp, -1 # Tang 1 cho trong Stack
+	  	  sb $t1, 0($sp) # Luu ki tu vao Stack
+
+		beqz $t0, Itoa_Load_String # Neu da luu het vao Stack thi chuyen sang load vao a1
+		j Itoa_Execute
+
+	Itoa_Load_String:
+		lb $t3, 0($sp) # Lay phan tu dau tien trong Stack ra luu vao $t3
+	  	  sb $t3, 0($t2) # Luu $t3 vao a1[i]
+	  	  addi $sp, $sp, 1 # Xoa space cua phan tu do trong Stack
+
+		beqz $t3, Itoa_Exit # Neu gap ki tu NULL thi ngung ko lay nua
+
+		addi $t2, $t2, 1 # $t2 <- &a1[i + 1]
+		addi $v0, $v0, 1 # v0++
+
+		j Itoa_Load_String
+
+	Itoa_Exit:
+		jr $ra # Quay tro ve ham goi ban dau
+#End of Itoa function
+
+Date: # Date(int a0, int a1, int a2, char* a3)
+	addi $sp, $sp, -4
+	  sw $v0, 0($sp) # Luu gia tri cua v0 vao Stack
+	addi $sp, $sp, -4
+	  sw $ra, 0($sp) # Luu dia chi tra ve tren thanh ghi $ra
+	addi $sp, $sp, -4
+	  sw $a1, 0($sp) # Luu gia tri cua a1 vao Stack
+	addi $sp, $sp, -4
+	  sw $a0, 0($sp) # Luu gia tri cua a0 vao Stack
+  
+	la $a1, ($a3) # Luu dia chi cua a3 vao a1
+	jal Itoa # Date(a0, Arr)
+  
+	lw $a0, 4($sp) # a0 = a1
+	la $t0, ($a3) # Luu dia chi mang vao t0
+	add $t1, $zero, $zero # t1 = 0
+
+	Date_Loop_1: # Date(a1, Arr)
+		beq $t1, $v0, Date_Loop_1_Exit
+		addi $t0, $t0, 1 # Tang dia chi cua t0 len 1 lan
+		addi $t1, $t1, 1 # t1++
+		j Date_Loop_1
+
+	Date_Loop_1_Exit:
+		addi $t2, $zero, 47 # t2 = '/'
+		sb $t2, 0($t0) # Luu t2 vao Mang
+		addi $t0, $t0, 1 # Tang dia chi cua t0 len 1 lan
+		la $a1, ($t0) # Luu dia chi cua Mang vao a1
+		jal Itoa
+  
+		add $a0, $a2, $zero # a0 = a2
+		add $t1, $zero, $zero # t1 = 0
+		la $t0, ($a1) # Luu dia chi cua Mang vao t0
+
+	Date_Loop_2: # Date(a2, Arr)
+		beq $t1, $v0, Date_Loop_2_Exit
+		addi $t0, $t0, 1 # Tang dia chi cua t0 len 1 lan
+		addi $t1, $t1, 1 # t1++
+		j Date_Loop_2
+
+	Date_Loop_2_Exit:
+		addi $t2, $zero, 47 # t2 = '/'
+		sb $t2, 0($t0) # Luu t2 vao Mang
+		addi $t0, $t0, 1 # Tang dia chi cua t0 len 1 lan
+		la $a1, ($t0) # Luu dia chi cua Mang vao a1
+		add $a0, $a2, $zero # a0 = a2
+		jal Itoa
+ 
+	Date_Exit:
+		lw $a0, 0($sp) # Lay ra a0
+		  addi $sp, $sp, 4
+		lw $a1, 0($sp) # Lay ra a1
+		  addi $sp, $sp, 4
+		lw $ra, 0($sp) # Lay ra $ra
+		  addi $sp, $sp, 4
+		la $v0, ($a3) # return v0
+		jr $ra
+#End of Date function
+
+LeapYear: # bool LeapYear(Time a0)
+	addi $sp, $sp, -4
+	  sw $ra, 0($sp) # Luu $ra vao Stack
+
+	jal Year
+
+	add $t0, $v0, $zero # t0 = v0, t0 la nam
+	add $v0, $zero, $zero # v0 = 0
+	div $t1, $t0, 400 # t0 / 400
+	mfhi $t1 # t1 = t0 % 400
+
+	beqz $t1, LeapYear_IF # If t1 = 0 then v0 = 1
+	beqz $zero, LeapYear_IF_Exit
+
+	LeapYear_IF: # Kiem tra dieu kien a0 chia het cho 400
+		addi $v0, $zero, 1 # v0 = 1
+		j LeapYear_Exit
+
+	LeapYear_IF_Exit:
+		div $t1, $t0, 4 # t0 / 4
+		mfhi $t1 # t1 = t0 % 4
+		div $t2, $t0, 100
+		mfhi $t2 # t1 = t0 $ 100
+		add $t1, $t1, $t2 # t1 = t1 + t2
+		beq $t1, $t2, LeapYear_IF # If t1 = t1 + t2 then v0 = 1 
+
+	LeapYear_Exit:
+		lw $ra, 0($sp) # Lay gia tri cua $ra trong Stadk
+		  addi $sp, $sp, 4
+		jr $ra
+#End of LeapYear function
+
+WeekDay: # WeekDay(char* a0)
+	addi $sp, $sp, -4
+	  sw $ra, 0($sp) # Luu $ra vao Stack
+
+	jal Day
+	add $t0, $v0, $zero # t0 la ngay
+	jal Month
+	add $t1, $v0, $zero # t1 la thang
+	jal Year
+	add $t2, $v0, $zero # t2 la nam
+  #li $t0, 26
+  #li $t1, 4
+  #li $t2, 2019
+
+		div $t3, $t2, 100 # t3 la the ky
+		mfhi $t4 # t4 = t2 % 100
+		bnez $t4, WeekDay_IF # If t4 !=0 then t3++
+		beqz $zero, WeekDay_IF_Exit  
+
+	WeekDay_IF:
+		addi $t3, $t3, 1 # t3++
+
+	WeekDay_IF_Exit: 
+		# t0 = (ngày + tháng + n?m + n?m/4 + th? k?) mod 7
+		add $t0, $t0, $t1
+		add $t0, $t0, $t2
+		div $t2, $t2, 4 # t2 = t2 / 4
+		add $t0, $t0, $t2
+		add $t0, $t0, $t3
+		div $t0, $t0, 7
+		mfhi $t0
+  
+		# Switch(t0) case:...
+		bnez $t0, WeekDay_Case_1
+		la $v0, string1 # k = 0 -> luu v0 = Sun
+		j WeekDay_Exit
+
+	WeekDay_Case_1:
+		addi $t0, $t0, -1
+		bnez $t0, WeekDay_Case_2
+		la $v0, string2 # k = 0 -> luu v0 = Mon
+		j WeekDay_Exit
+
+	WeekDay_Case_2:
+		addi $t0, $t0, -1
+		bnez $t0, WeekDay_Case_3
+		la $v0, string3 # k = 0 -> luu v0 = Tue
+		j WeekDay_Exit
+
+	WeekDay_Case_3:
+		addi $t0, $t0, -1
+		bnez $t0, WeekDay_Case_4
+		la $v0, string4 # k = 0 -> luu v0 = Wed
+		j WeekDay_Exit
+
+	WeekDay_Case_4:
+		addi $t0, $t0, -1
+		bnez $t0, WeekDay_Case_5
+		la $v0, string5 # k = 0 -> luu v0 = Thurs
+		j WeekDay_Exit
+
+	WeekDay_Case_5:
+		addi $t0, $t0, -1
+		bnez $t0, WeekDay_Case_6
+		la $v0, string6 # k = 0 -> luu v0 = Fri
+		j WeekDay_Exit
+
+	WeekDay_Case_6:
+		addi $t0, $t0, -1
+		bnez $t0, WeekDay_Exit
+		la $v0, string7 # k = 0 -> luu v0 = Sat
+ 
+	WeekDay_Exit:
+		lw $ra, 0($sp) # Lay gia tri cua $ra luc ban dau
+ 		  addi $sp, $sp, 4
+		jr $ra
+#End of WeekDay function
