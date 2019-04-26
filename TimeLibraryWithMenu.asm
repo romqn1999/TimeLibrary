@@ -1564,6 +1564,8 @@ LeapYear_2: # bool LeapYear(int a0)
 	  sw $t0, 0($sp) # Luu $t0 vao Stack	
 	addi $sp, $sp, -4
 	  sw $t1, 0($sp) # Luu $t1 vao Stack
+	addi $sp, $sp, -4
+	  sw $t2, 0($sp) # Luu $t2 vao Stack
 
 	add $t0, $a0, $zero # t0 = a0, t0 la nam
 	add $v0, $zero, $zero # v0 = 0
@@ -1586,6 +1588,8 @@ LeapYear_2: # bool LeapYear(int a0)
 		beq $t1, $t2, LeapYear_2_IF # If t1 = t1 + t2 then v0 = 1 
 
 	LeapYear_2_Exit:
+		lw $t2, 0($sp) # Lay gia tri cua $2 trong Stack
+		  addi $sp, $sp, 4
 		lw $t1, 0($sp) # Lay gia tri cua $t1 trong Stack
 		  addi $sp, $sp, 4
 		lw $t0, 0($sp) # Lay gia tri cua $t0 trong Stack
