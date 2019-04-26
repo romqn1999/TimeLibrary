@@ -236,42 +236,6 @@ WeekDay: # WeekDay(char* a0)
 		lw $ra, 0($sp) # Lay gia tri cua $ra luc ban dau
  		  addi $sp, $sp, 4
 		jr $ra
- 
-LeapYear_Nearest: # LeaYearNearest(char* a0)
-	addi $sp, $sp, -4
-	  sw $ra, 0($sp) # Luu $ra vao Stack
-	
-	jal Year
-	add $t0, $v0, $zero # t0 = v0 : year
-
-LeapYear_2: # bool LeapYear(int a0)
-	addi $sp, $sp, -4
-	  sw $ra, 0($sp) # Luu $ra vao Stack
-
-	add $t0, $0, $zero # t0 = a0, t0 la nam
-	add $v0, $zero, $zero # v0 = 0
-	div $t1, $t0, 400 # t0 / 400
-	mfhi $t1 # t1 = t0 % 400
-
-	beqz $t1, LeapYear_2_IF # If t1 = 0 then v0 = 1
-	beqz $zero, LeapYear_2_IF_Exit
-
-	LeapYear_2_IF: # Kiem tra dieu kien a0 chia het cho 400
-		addi $v0, $zero, 1 # v0 = 1
-		j LeapYear_2_Exit
-
-	LeapYear_2_IF_Exit:
-		div $t1, $t0, 4 # t0 / 4
-		mfhi $t1 # t1 = t0 % 4
-		div $t2, $t0, 100
-		mfhi $t2 # t1 = t0 $ 100
-		add $t1, $t1, $t2 # t1 = t1 + t2
-		beq $t1, $t2, LeapYear_2_IF # If t1 = t1 + t2 then v0 = 1 
-
-	LeapYear_2_Exit:
-		lw $ra, 0($sp) # Lay gia tri cua $ra trong Stadk
-		  addi $sp, $sp, 4
-		jr $ra
 
 LeapYear_Nearest: # int* LeaYearNearest(char* a0)
 	addi $sp, $sp, -4
