@@ -1434,7 +1434,7 @@ WeekDay: # WeekDay(char* a0)
 		addi $t1, $t1, 12 # t1 += 12
 
 	WeekDay_IF_Exit: 
-		# t0 = (ngày + tháng + n?m + n?m/4 + th? k?) mod 7
+		# t0 = (ngày + |13*(tháng+1)/5| + năm + |năm/4| + |thế kỷ/4| - 2*thế kỷ) mod 7 : Cong thuc Zeller
 		addi $t1, $t1, 1              # t1 = 13/5*(t1+1)
 		addi $v0, $zero, 13
 		mult $t1, $v0
